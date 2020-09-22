@@ -1,0 +1,28 @@
+---
+- hosts: localhost
+  connection : local
+
+  tasks:
+  - name: Slurp file
+    slurp:
+      src: myfile
+    register: myfile
+
+  - name: Remove line if not in block
+    lineinfile:
+      path: myfile
+      line: 'line in block'
+      state: absent
+    when: >
+      not (myfile.content 
+           | b64decode 
+           | regex_search('# BEGIN MyBlock(\n.*)*\nline in block(\n.*)*\n# END MyBlock')) 
+    
+  - name: Add block
+    blockinfile:
+      path: myfile
+      marker: "# {mark} MyBlock"
+      block: |
+        line in block
+        other line in block
+
